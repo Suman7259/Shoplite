@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShopLite • Demo Store</title>
+  <style>
+    :root{
+      --bg:#0f172a;        /* slate-900 */
+      --card:#111827;      /* gray-900 */
+      --muted:#94a3b8;     /* slate-400 */
+      --text:#e5e7eb;      /* gray-200 */
+      --brand:#7c3aed;     /* violet-600 */
+      --brand-2:#22d3ee;   /* cyan-400 */
+      --bad:#ef4444;
+      --good:#10b981;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(124,58,237,.25), transparent),
+                  radial-gradient(900px 500px at 90% -20%, rgba(34,211,238,.25), transparent), var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .container{max-width:1200px; margin:0 auto; padding:20px}
+    header{
+      position:sticky; top:0; z-index:20;
+      backdrop-filter: blur(8px);
+      background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.6));
+      border-bottom:1px solid rgba(148,163,184,.15);
+    }
+    .nav{display:flex; align-items:center; gap:16px; padding:14px 20px}
+    .logo{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.5px}
+    .logo .badge{width:28px;height:28px; display:grid; place-items:center; border-radius:8px; font-weight:900; background: linear-gradient(135deg, var(--brand), var(--brand-2));}
+    .search{flex:1; display:flex; gap:10px}
+    .search input{
+      flex:1; padding:10px 12px; background:#0b1220; border:1px solid rgba(148,163,184,.2);
+      border-radius:10px; color:var(--text);
+    }
+    .btn{padding:10px 14px; border-radius:10px; border:1px solid rgba(148,163,184,.2); background:#0b1220; color:var(--text); cursor:pointer}
+    .btn.primary{border:none; background:linear-gradient(135deg, var(--brand), var(--brand-2)); color:white; font-weight:700}
+    .btn.ghost{background:transparent}
+
+    .filters{display:grid; grid-template-columns: 1fr auto auto; gap:12px; align-items:center; margin:18px 0}
+    .chipbar{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:8px 12px; background:#0b1220; border:1px solid rgba(148,163,184,.2); color:var(--muted); border-radius:999px; cursor:pointer; font-size:14px}
+    .chip.active{background:rgba(124,58,237,.15); color:#e9d5ff; border-color:rgba(124,58,237,.35)}
+    select{padding:10px 12px; background:#0b1220; border:1px solid rgba(148,163,184,.2); color:var(--text); border-radius:10px}
+
+    .grid{display:grid; grid-template-columns: repeat(4, 1fr); gap:16px}
+    @media (max-width:1000px){.grid{grid-template-columns: repeat(3,1fr)}}
+    @media (max-width:760px){.grid{grid-template-columns: repeat(2,1fr)} .filters{grid-template-columns:1fr} .search{display:none}}
+    @media (max-width:440px){.grid{grid-template-columns: 1fr}}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0)); border:1px solid rgba(148,163,184,.12); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; min-height:100%}
+    .thumb{aspect-ratio: 1 / 1; background:#0b1220; display:grid; place-items:center; position:relative}
+    .thumb .img{width:70%; height:70%; background: conic-gradient(from 0deg, var(--brand), var(--brand-2), var(--brand), var(--brand-2)); border-radius:16px; filter:blur(.5px) saturate(1.1)}
+    .thumb .label{position:absolute; top:10px; left:10px; background:rgba(0,0,0,.5); border:1px solid rgba(148,163,184,.3); padding:4px 8px; border-radius:999px; font-size:12px}
+    .content{padding:14px}
+    .title{font-weight:700; margin:0 0 6px; font-size:16px}
+    .muted{color:var(--muted); font-size:13px}
+    .price{display:flex; align-items:baseline; gap:8px; margin:10px 0}
+    .price .now{font-weight:800}
+    .price .old{text-decoration: line-through; color:#94a3b880}
+    .actions{display:flex; gap:8px; margin-top:auto; padding:14px}
+
+    /* Cart drawer */
+    .cart-btn{position:relative}
+    .cart-badge{position:absolute; top:-6px; right:-6px; background:var(--good); color:#072; font-weight:800; font-size:12px; padding:2px 6px; border-radius:999px}
+    .drawer{position:fixed; right:0; top:0; height:100%; width:380px; max-width:92vw; background:#0b1220; border-left:1px solid rgba(148,163,184,.2); box-shadow: -8px 0 24px rgba(0,0,0,.25); transform: translateX(100%); transition:.35s ease; z-index:50; display:flex; flex-direction:column}
+    .drawer.open{transform: translateX(0)}
+    .drawer header{position:sticky; top:0; background:#0b1220; border-bottom:1px solid rgba(148,163,184,.15); padding:16px 18px; display:flex; align-items:center; justify-content:space-between}
+    .drawer .items{padding:12px; overflow:auto; display:flex; flex-direction:column; gap:12px}
+    .line{display:grid; grid-template-columns: 56px 1fr auto; gap:10px; align-items:center; background:#0f172a; border:1px solid rgba(148,163,184,.12); border-radius:12px; padding:8px}
+    .line .ph{width:56px;height:56px; border-radius:8px; background:linear-gradient(135deg, var(--brand), var(--brand-2))}
+    .qty{display:flex; align-items:center; gap:6px}
+    .qty button{width:26px;height:26px;border-radius:6px; border:1px solid rgba(148,163,184,.25); background:#0b1220; color:var(--text); cursor:pointer}
+    .row{display:flex; align-items:center; justify-content:space-between; margin:6px 0; color:var(--muted)}
+    .checkout{padding:14px 18px; border-top:1px solid rgba(148,163,184,.15); display:grid; gap:10px}
+    .empty{color:var(--muted); text-align:center; padding:40px}
+
+    .pill{padding:6px 10px; font-size:12px; border-radius:999px; border:1px solid rgba(148,163,184,.2); color:var(--muted)}
+    .footer{margin:30px 0; text-align:center; color:var(--muted); font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav container">
+      <div class="logo"><div class="badge">S</div> ShopLite</div>
+      <div class="search">
+        <input id="search" type="text" placeholder="Search products… (e.g. headphones)" />
+        <button class="btn" id="clearSearch">Clear</button>
+      </div>
+      <button class="btn ghost" id="favoritesBtn" title="Saved items">★</button>
+      <button class="btn cart-btn" id="openCart">🛒 Cart <span class="cart-badge" id="cartCount">0</span></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="filters">
+      <div class="chipbar" id="chipbar"></div>
+      <select id="sort">
+        <option value="pop">Sort • Popular</option>
+        <option value="asc">Price • Low → High</option>
+        <option value="desc">Price • High → Low</option>
+        <option value="name">Name • A → Z</option>
+      </select>
+      <button class="btn primary" id="resetBtn">Reset Filters</button>
+    </section>
+
+    <section class="grid" id="grid"></section>
+
+    <p class="footer">Demo store • No backend • Cart saved in your browser (localStorage)</p>
+  </main>
+
+  <!-- Cart Drawer -->
+  <aside class="drawer" id="drawer">
+    <header>
+      <strong>🛒 Your Cart</strong>
+      <button class="btn" id="closeCart">Close</button>
+    </header>
+    <div class="items" id="cartItems"></div>
+    <div class="checkout">
+      <div class="row"><span>Subtotal</span><span id="subt">₹0.00</span></div>
+      <div class="row"><span>GST (18%)</span><span id="tax">₹0.00</span></div>
+      <div class="row" style="color:#fff"><strong>Total</strong><strong id="grand">₹0.00</strong></div>
+      <button class="btn primary" id="checkoutBtn">Checkout</button>
+      <button class="btn" id="clearCart">Clear Cart</button>
+    </div>
+  </aside>
+
+  <script>
+    // --- Demo product data ---
+    const PRODUCTS = [
+  {
+    id: 1,
+    name: "Cosmic Byte Headphones",
+    cat: "Audio",
+    price: 2999,
+    old: 3999,
+    tag: "Hot",
+    img: "https://cdns3.thecosmicbyte.com/wp-content/uploads/white-bg-2.jpg.webp"
+  },
+  {
+    id: 2,
+    name: "Realme Earbuds",
+    cat: "Audio",
+    price: 1499,
+    old: 1999,
+    tag: "New",
+    img: "https://assets.myntassets.com/h_1440,q_100,w_1080/v1/assets/images/29948318/2024/7/2/3c50d3c9-6354-4497-ba6d-c7426a00a7ae1719900362950-Realme-Air-6-TWS-Earbuds-with-50dB-Active-Noise-Cancellation-1.jpg"
+  },
+  {
+    id: 3,
+    name: "",
+    cat: "Wearables",
+    price: 4999,
+    old: 6499,
+    tag: "-20%",
+    img: "https://cdn.shopify.com/s/files/1/0057/8938/4802/files/Lifestyle_render_154400cd-4bd3-4dd8-9c4a-e56f27910199.jpg?v=1729580370"
+  },
+  {
+    id: 4,
+    name: "Comet Gaming Mouse",
+    cat: "Accessories",
+    price: 999,
+    old: 1299,
+    tag: "Hot",
+    img: "https://www.mytrendyphone.eu/images/6D-4-Speed-DPI-RGB-Gaming-Mouse-G5-Black-05042021-01-p.webp"
+  },
+  {
+    id: 5,
+    name: "Lumen Desk Lamp",
+    cat: "Home",
+    price: 1299,
+    old: 1699,
+    tag: "Eco",
+    img: "https://m.media-amazon.com/images/I/71D2YNJoNNL._UF1000,1000_QL80_.jpg"
+  },
+  {
+    id: 6,
+    name: "Zen Keyboard",
+    cat: "Accessories",
+    price: 1999,
+    old: 2399,
+    tag: "New",
+    img: "https://images-cdn.ubuy.co.in/63400c68afe02d2b0c7aeb85-mechanical-gaming-keyboard-87-keys-small.jpg"
+  },
+  {
+    id: 7,
+    name: "Pulse Fitness Band",
+    cat: "Wearables",
+    price: 1799,
+    old: 2299,
+    tag: "Deal",
+    img: "https://www.vitsupp.in/wp-content/uploads/2016/02/Garmin-Vivosmart-Blue-Fitness-Band-1.jpg"
+  },
+  {
+    id: 8,
+    name: "Orbit Bluetooth Speaker",
+    cat: "Audio",
+    price: 2199,
+    old: 2799,
+    tag: "-10%",
+    img: "https://m.media-amazon.com/images/I/71LRBr7xE3L._SX679_.jpg"
+  },
+  {
+    id: 9,
+    name: "Pixel Desk Mat",
+    cat: "Accessories",
+    price: 699,
+    old: 899,
+    tag: "New",
+    img: "https://m.media-amazon.com/images/I/71kWsmEzlML._SX679_.jpg"
+  },
+  {
+    id: 10,
+    name: "Halo Night Light",
+    cat: "Home",
+    price: 599,
+    old: 799,
+    tag: "",
+    img: "https://m.media-amazon.com/images/I/61YjL3A7tKL._SX679_.jpg"
+  },
+  {
+    id: 11,
+    name: "Vortex USB-C Hub",
+    cat: "Accessories",
+    price: 1599,
+    old: 1899,
+    tag: "",
+    img: "https://m.media-amazon.com/images/I/61D2g4VUdWL._SX679_.jpg"
+  },
+  {
+    id: 12,
+    name: "Glide Laptop Stand",
+    cat: "Accessories",
+    price: 1399,
+    old: 1699,
+    tag: "Ergo",
+    img: "https://m.media-amazon.com/images/I/61MikL6r-QL._SX679_.jpg"
+  }
+];
+
+
+    const state = {
+      q:"",
+      cat:"All",
+      sort:"pop",
+      cart: JSON.parse(localStorage.getItem('cart')||'{}'),
+      fav: JSON.parse(localStorage.getItem('fav')||'[]'),
+    };
+
+    const els = {
+      grid: document.getElementById('grid'),
+      chipbar: document.getElementById('chipbar'),
+      search: document.getElementById('search'),
+      clearSearch: document.getElementById('clearSearch'),
+      sort: document.getElementById('sort'),
+      resetBtn: document.getElementById('resetBtn'),
+      cartCount: document.getElementById('cartCount'),
+      drawer: document.getElementById('drawer'),
+      openCart: document.getElementById('openCart'),
+      closeCart: document.getElementById('closeCart'),
+      cartItems: document.getElementById('cartItems'),
+      subt: document.getElementById('subt'),
+      tax: document.getElementById('tax'),
+      grand: document.getElementById('grand'),
+      clearCart: document.getElementById('clearCart'),
+      checkoutBtn: document.getElementById('checkoutBtn'),
+    };
+
+    // Build category chips
+    const categories = ['All', ...Array.from(new Set(PRODUCTS.map(p=>p.cat)))];
+    categories.forEach(c=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.textContent = c;
+      if(c===state.cat) chip.classList.add('active');
+      chip.addEventListener('click',()=>{ state.cat=c; updateChips(); render(); });
+      els.chipbar.appendChild(chip);
+    });
+    function updateChips(){
+      [...els.chipbar.children].forEach(ch=>{
+        ch.classList.toggle('active', ch.textContent===state.cat);
+      })
+    }
+
+    // Search, sort, reset
+    els.search.addEventListener('input', e=>{ state.q = e.target.value.toLowerCase(); render(); });
+    els.clearSearch.addEventListener('click',()=>{ els.search.value=''; state.q=''; render(); });
+    els.sort.addEventListener('change', e=>{ state.sort = e.target.value; render(); });
+    els.resetBtn.addEventListener('click',()=>{ state.q=''; els.search.value=''; state.cat='All'; state.sort='pop'; updateChips(); els.sort.value='pop'; render(); })
+
+    // Cart drawer events
+    els.openCart.addEventListener('click',()=>{ els.drawer.classList.add('open'); renderCart(); });
+    els.closeCart.addEventListener('click',()=> els.drawer.classList.remove('open'));
+    els.clearCart.addEventListener('click',()=>{ state.cart={}; persist(); renderCart(); render(); });
+    els.checkoutBtn.addEventListener('click',()=>{
+      if(Object.keys(state.cart).length===0){ alert('Your cart is empty.'); return; }
+      alert('This is a front-end demo. Implement payment on the server in a real app.');
+    });
+
+    function persist(){ localStorage.setItem('cart', JSON.stringify(state.cart)); }
+
+    function addToCart(id){ state.cart[id] = (state.cart[id]||0)+1; persist(); bump(); renderCart(); render(); }
+    function rmFromCart(id){ delete state.cart[id]; persist(); renderCart(); render(); }
+
+    function bump(){
+      els.cartCount.animate([{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}],{duration:300});
+    }
+
+    function render(){
+      const term = state.q.trim();
+      let list = PRODUCTS.filter(p=> (state.cat==='All' || p.cat===state.cat));
+      if(term) list = list.filter(p=> (p.name+" "+p.cat).toLowerCase().includes(term));
+      switch(state.sort){
+        case 'asc': list.sort((a,b)=>a.price-b.price); break;
+        case 'desc': list.sort((a,b)=>b.price-a.price); break;
+        case 'name': list.sort((a,b)=>a.name.localeCompare(b.name)); break;
+        default: /* pop */ list.sort((a,b)=>a.id-b.id);
+      }
+      els.grid.innerHTML = '';
+      if(list.length===0){
+        els.grid.innerHTML = `<div class="card" style="grid-column:1/-1; padding:30px; text-align:center; color:var(--muted)">No products match your filters.</div>`;
+        return;
+      }
+      list.forEach(p=>{
+        const inCartQty = state.cart[p.id]||0;
+        const card = document.createElement('article');
+        card.className='card';
+        card.innerHTML = `
+          <div class="thumb">
+            <div class="img"></div>
+            ${p.tag?`<div class="label">${p.tag}</div>`:''}
+          </div>
+          <div class="content">
+            <h3 class="title">${p.name}</h3>
+            <div class="muted">${p.cat}</div>
+            <div class="price"><span class="now">₹${p.price.toLocaleString()}</span> <span class="old">₹${p.old.toLocaleString()}</span></div>
+            <span class="pill">${inCartQty? (inCartQty+" in cart") : "Free returns"}</span>
+          </div>
+          <div class="actions">
+            <button class="btn" data-like>♡ Save</button>
+            <button class="btn primary" data-add>Add to cart</button>
+          </div>`;
+        card.querySelector('[data-add]').addEventListener('click',()=> addToCart(p.id));
+        card.querySelector('[data-like]').addEventListener('click', (e)=>{
+          e.currentTarget.textContent = '★ Saved';
+        });
+        els.grid.appendChild(card);
+      });
+      updateCartBadge();
+    }
+
+    function updateCartBadge(){
+      const count = Object.values(state.cart).reduce((a,b)=>a+b,0);
+      els.cartCount.textContent = count;
+    }
+
+    function renderCart(){
+      updateCartBadge();
+      const ids = Object.keys(state.cart);
+      if(ids.length===0){ els.cartItems.innerHTML = `<div class="empty">Your cart is empty.</div>`; els.subt.textContent='₹0.00'; els.tax.textContent='₹0.00'; els.grand.textContent='₹0.00'; return; }
+      els.cartItems.innerHTML = '';
+      let subtotal = 0;
+      ids.forEach(id=>{
+        const p = PRODUCTS.find(x=> x.id==id);
+        const qty = state.cart[id];
+        const line = p.price * qty;
+        subtotal += line;
+        const row = document.createElement('div');
+        row.className='line';
+        row.innerHTML = `
+          <div class="ph"></div>
+          <div>
+            <div style="font-weight:700">${p.name}</div>
+            <div class="muted">₹${p.price.toLocaleString()} × ${qty} = ₹${line.toLocaleString()}</div>
+            <div class="qty">
+              <button data-dec>-</button>
+              <span>${qty}</span>
+              <button data-inc>+</button>
+              <button data-rm style="margin-left:auto">Remove</button>
+            </div>
+          </div>
+          <div style="font-weight:800">₹${line.toLocaleString()}</div>`;
+        row.querySelector('[data-inc]').addEventListener('click',()=>{ state.cart[id]++; persist(); renderCart(); render(); });
+        row.querySelector('[data-dec]').addEventListener('click',()=>{ state.cart[id] = Math.max(1, state.cart[id]-1); persist(); renderCart(); render(); });
+        row.querySelector('[data-rm]').addEventListener('click',()=> rmFromCart(id));
+        els.cartItems.appendChild(row);
+      });
+      const gst = subtotal * 0.18;
+      els.subt.textContent = `₹${subtotal.toFixed(2)}`;
+      els.tax.textContent = `₹${gst.toFixed(2)}`;
+      els.grand.textContent = `₹${(subtotal+gst).toFixed(2)}`;
+    }
+
+    // init
+    render();
+    renderCart();
+  </script>
+</body>
+</html>
